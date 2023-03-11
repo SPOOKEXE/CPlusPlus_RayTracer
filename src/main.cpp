@@ -1,9 +1,26 @@
 
 #include <iostream>
+#include "include/raylib.h"
 #include "include/mathlib.h"
 #include "include/stringlib.h"
 
-int main() {
+void run_app() {
+	const int screenWidth = 800;
+	const int screenHeight = 600;
+
+	InitWindow(screenWidth, screenHeight, "Particle Simulation");
+	SetTargetFPS(60);
+
+	while (!WindowShouldClose()) {
+		BeginDrawing();
+			ClearBackground(RAYWHITE);
+			DrawText("Congrats! You created your first window!", (int) screenWidth/4, (int) screenHeight/2, 20, BLACK);
+		EndDrawing();
+	}
+	CloseWindow();
+}
+
+void run_tests() {
 	mathlib::Vector2f v1 = mathlib::Vector2f(5.0f, 3.0f);
 	mathlib::Vector2f v2 = mathlib::Vector2f(3.0f, 5.0f);
 
@@ -23,6 +40,10 @@ int main() {
 	std::cout << origin.toString() << std::endl;
 	std::cout << goal.toString() << std::endl;
 	std::cout << ncf.Position.toString() << std::endl;
+}
 
+int main() {
+	// run_tests();
+	run_app();
 	return 0;
 }
