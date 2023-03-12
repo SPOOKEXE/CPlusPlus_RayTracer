@@ -1,140 +1,104 @@
 
 #include <iostream>
 #include <vector>
-#include <ctime>
-#include <random>
 #include "include/raylib.h"
 #include "include/mathlib.h"
 #include "include/stringlib.h"
 
 const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_HEIGHT = 800;
 
-class Particle  {
+class ImageDisplayBuffer {
 	public:
-		float x, y;
-		float dx, dy;
-		float speed;
-		float radius;
+		Texture2D* activeTexture;
+		Image* buffer1;
+		Image* buffer2;
+		int bufferState;
 
-		Particle();
-		~Particle();
+		ImageDisplayBuffer();
+		~ImageDisplayBuffer();
+
 		void toDefault();
-		void randomize();
-		void step(float delta);
-		void wrap_bounds();
-		std::string* toString();
+
+		void SetPixel(int x, int y, Color* color);
+		void SetActive(Image* image);
+		void SetInactive(Image* image);
+		Image* GetActive();
+		Image* GetInactive();
+		
+		void Flip();
 };
 
-Particle::Particle() {
-	this->toDefault();
+ImageDisplayBuffer::ImageDisplayBuffer() { this->toDefault(); }
+ImageDisplayBuffer::~ImageDisplayBuffer() { }
+
+void ImageDisplayBuffer::toDefault() {
+	Image blank1 = GenImageWhiteNoise(SCREEN_WIDTH, SCREEN_HEIGHT, 0.5);
+	Image blank2 = GenImageCellular(SCREEN_WIDTH, SCREEN_HEIGHT, 2);
+	Texture2D textured = LoadTextureFromImage(blank1);
+
+	this->buffer1 = &blank1;
+	this->buffer2 = &blank2;
+	this->activeTexture = new Texture(textured);
+	this->bufferState = 1;
 }
 
-Particle::~Particle() {
-
+void ImageDisplayBuffer::SetPixel(int x, int y, Color* color) {
+	ImageDrawPixel(this->GetInactive(), x, y, *color);
 }
 
-void Particle::toDefault() {
-	this->x = (float) SCREEN_WIDTH / 2;
-	this->y = (float) SCREEN_HEIGHT / 2;
-	this->dx = 0;
-	this->dy = 0;
-	this->speed = 0;
-	this->radius = 3;
+void ImageDisplayBuffer::SetActive(Image* image) { 
+	this->bufferState == 1 ? this->buffer1 = image : this->buffer2 = image;
 };
 
-void Particle::randomize() {
-	this->x = mathlib::randomInt(50, SCREEN_WIDTH - 50);
-	this->y = mathlib::randomInt(50, SCREEN_HEIGHT - 50);
-	mathlib::Vector2f* dir = new mathlib::Vector2f(mathlib::randomInt(0, 300) - 150, mathlib::randomInt(0, 300) - 150);
-	dir = dir->unit();
-	this->dx = mathlib::randomInt(0, 300) - 150;
-	this->dy = mathlib::randomInt(0, 300) - 150;
-	this->speed = 20 + (rand() % 50);
-	this->radius = 2 + rand() % 3;
+void ImageDisplayBuffer::SetInactive(Image* image) { 
+	this->bufferState == 2 ? this->buffer1 = image : this->buffer2 = image;
 };
 
-void Particle::step(float delta) {
-	float nextX = this->x + (this->dx * delta);
-	float nextY = this->y + (this->dy * delta);
-	this->x = nextX;
-	this->y = nextY;
+Image* ImageDisplayBuffer::GetActive() { 
+	return (this->bufferState == 1) ? this->buffer1 : this->buffer2;
 };
 
-void Particle::wrap_bounds() {
-	if (this->x > SCREEN_WIDTH) {
-		this->x -= SCREEN_WIDTH;
-	} else if (this->x < 0) {
-		this->x += SCREEN_WIDTH;
-	}
-	if (this->y > SCREEN_HEIGHT) {
-		this->y -= SCREEN_HEIGHT;
-	} else if (this->y < 0) {
-		this->y += SCREEN_HEIGHT;
-	}
+Image* ImageDisplayBuffer::GetInactive() { 
+	return (this->bufferState == 2) ? this->buffer1 : this->buffer2;
 };
 
-std::string* Particle::toString() {
-	return string_format("Particle(%d, %d, %f, %f, %f, %f)", this->x, this->y, this->dx, this->dy, this->speed, this->radius);
-};
+void ImageDisplayBuffer::Flip() {
+	this->bufferState = (this->bufferState == 1) ? 2 : 1;
+
+	// TODO: fix
+	// Texture2D textured = LoadTextureFromImage( *new Image(*this->GetActive()) );
+	// this->activeTexture = new Texture(textured);
+}
 
 void run_app() {
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Particle Simulation");
 	SetTargetFPS(60);
 
-	// vector of pointers to Particle objects
-	std::vector<Particle*> particles = std::vector<Particle*>(50);
-
-	for (unsigned int index = 0; index < particles.size(); index++) {
-		// update the randomizer seed
-		std::srand( index );
-		// create a new particle object and store the pointer
-		Particle* particle = new Particle();
-		// randomize the particle
-		particle->randomize();
-		// store the particle in the particle array
-		particles[index] = particle;
-	}
-
-	// for each active particle
-	for (unsigned int index = 0; index < particles.size(); index++) {
-		// get the particle pointer
-		Particle* p = particles[index];
-		// output the toString of it
-		std::cout << *p->toString() << std::endl;
-	}
+	ImageDisplayBuffer* imgDisplayBuffer = new ImageDisplayBuffer();
 
 	std::clock_t last_lock = std::clock();
 	while (!WindowShouldClose()) {
-		std::clock_t new_clock = std::clock();
 		
-		// update particles
+		std::clock_t new_clock = std::clock();
 		float delta = (new_clock - last_lock) * 1e-3;
-		for (unsigned int index = 0; index < particles.size(); index++) {
-			// get the pointer
-			Particle* p = particles[index];
-			// step the particle physics
-			p->step(delta);
-			// wrap the particle around scene bounds
-			p->wrap_bounds();
+		if (delta > 1) {
+			std::cout << "flip - " << imgDisplayBuffer->bufferState << std::endl;
+			imgDisplayBuffer->Flip();
+			last_lock = new_clock;;
 		}
-
-		last_lock = new_clock;
-
+		
+		// check update status (if not updating, start updating)
 		BeginDrawing();
 			ClearBackground(BLACK);
-
-			// display particles
-			for (unsigned int index = 0; index < particles.size(); index++) {
-				// get the particle pointer
-				Particle* p = particles[index];
-				// draw the particle
-				DrawCircle( p->x, p->y, p->radius, WHITE );
-			}
-
+			DrawTexture(*imgDisplayBuffer->activeTexture, 0, 0, WHITE);
+			// display active buffer image
 		EndDrawing();
 	}
 	CloseWindow();
+
+	delete(imgDisplayBuffer);
+
 }
 
 int main() {

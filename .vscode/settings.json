@@ -42,6 +42,14 @@
 		"array": "cpp",
 		"iterator": "cpp",
 		"ctime": "cpp",
-		"random": "cpp"
+		"random": "cpp",
+		"chrono": "cpp",
+		"functional": "cpp",
+		"list": "cpp",
+		"ratio": "cpp",
+		"thread": "cpp",
+		"unordered_map": "cpp",
+		"xhash": "cpp",
+		"xthread": "cpp"
 	}
 }

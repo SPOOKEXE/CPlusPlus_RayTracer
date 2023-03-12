@@ -469,7 +469,9 @@ namespace mathlib {
 	};
 
 	Vector3f* Vector3f::lerp(Vector3f* other, float t) {
-		return this->mult((1-t))->add(other->mult(t));
+		Vector3f* m1 = this->mult((1-t));
+		Vector3f* m2 = other->mult(t);
+		return m1->add(m2);
 	};
 
 	Vector3f* Vector3f::unit() {
