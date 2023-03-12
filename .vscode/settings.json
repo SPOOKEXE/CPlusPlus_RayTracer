@@ -37,6 +37,11 @@
 		"xstring": "cpp",
 		"xtr1common": "cpp",
 		"xutility": "cpp",
-		"algorithm": "cpp"
+		"algorithm": "cpp",
+		"vector": "cpp",
+		"array": "cpp",
+		"iterator": "cpp",
+		"ctime": "cpp",
+		"random": "cpp"
 	}
 }
